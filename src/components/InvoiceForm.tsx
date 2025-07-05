@@ -22,7 +22,7 @@ interface InvoiceItem {
 interface InvoiceFormData {
   client_id: string;
   invoice_number: string;
-  invoice_date: string;
+  issue_date: string;
   due_date: string;
   notes: string;
   tax_rate: number;
@@ -36,7 +36,7 @@ const InvoiceForm = () => {
   const [formData, setFormData] = useState<InvoiceFormData>({
     client_id: '',
     invoice_number: '',
-    invoice_date: new Date().toISOString().split('T')[0],
+    issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     notes: '',
     tax_rate: 0,
@@ -57,7 +57,7 @@ const InvoiceForm = () => {
       return invoiceService.create({
         client_id: data.client_id || null,
         invoice_number: data.invoice_number,
-        invoice_date: data.invoice_date,
+        issue_date: data.issue_date,
         due_date: data.due_date,
         subtotal,
         tax_rate: data.tax_rate,
@@ -77,7 +77,7 @@ const InvoiceForm = () => {
       setFormData({
         client_id: '',
         invoice_number: '',
-        invoice_date: new Date().toISOString().split('T')[0],
+        issue_date: new Date().toISOString().split('T')[0],
         due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         notes: '',
         tax_rate: 0,
@@ -205,12 +205,12 @@ const InvoiceForm = () => {
             </div>
             
             <div>
-              <Label htmlFor="invoice_date">Invoice Date</Label>
+              <Label htmlFor="issue_date">Invoice Date</Label>
               <Input
-                id="invoice_date"
+                id="issue_date"
                 type="date"
-                value={formData.invoice_date}
-                onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
+                value={formData.issue_date}
+                onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
                 required
               />
             </div>
