@@ -7,6 +7,10 @@ import { Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+interface PricingSectionProps {
+  onNavigate?: (page: string) => void;
+}
+
 const plans = [
   {
     name: "Free",
@@ -59,7 +63,7 @@ const plans = [
   }
 ];
 
-const PricingSection = () => {
+const PricingSection = ({ onNavigate }: PricingSectionProps) => {
   const { toast } = useToast();
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
@@ -68,6 +72,9 @@ const PricingSection = () => {
         title: "Free Plan",
         description: "You're already on the free plan! Sign up to get started.",
       });
+      if (onNavigate) {
+        onNavigate('create-invoice');
+      }
       return;
     }
 
