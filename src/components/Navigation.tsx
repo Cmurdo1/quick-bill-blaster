@@ -6,8 +6,7 @@ import {
   FileText,
   Users,
   Plus,
-  Settings,
-  Zap
+  Settings
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -25,16 +24,16 @@ const Navigation = ({ currentPage, onNavigate }: NavigationProps) => {
 
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-2">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Zap className="w-6 h-6 text-white" />
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center">
+              <span className="text-white font-bold text-lg">HI</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Quick Bill Blaster</h1>
+            <h1 className="text-xl font-bold text-gray-900">HonestInvoice</h1>
           </div>
           
-          <div className="flex space-x-1">
+          <div className="hidden md:flex space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -42,7 +41,11 @@ const Navigation = ({ currentPage, onNavigate }: NavigationProps) => {
                   key={item.id}
                   variant={currentPage === item.id ? "default" : "ghost"}
                   onClick={() => onNavigate(item.id)}
-                  className="flex items-center space-x-2"
+                  className={`flex items-center space-x-2 ${
+                    currentPage === item.id 
+                      ? "bg-green-600 hover:bg-green-700 text-white" 
+                      : "hover:bg-gray-100"
+                  }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
@@ -52,9 +55,14 @@ const Navigation = ({ currentPage, onNavigate }: NavigationProps) => {
           </div>
         </div>
 
-        <Button variant="outline" size="sm">
-          <Settings className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center space-x-4">
+          <Button variant="outline" size="sm" className="border-green-600 text-green-600 hover:bg-green-50">
+            Sign In
+          </Button>
+          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+            Get Started
+          </Button>
+        </div>
       </div>
     </nav>
   );

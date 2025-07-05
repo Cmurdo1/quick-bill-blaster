@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          firebase_uid: string | null
+          id: string
+          name: string
+          phone: string | null
+          state: string | null
+          updated_at: string | null
+          user_id: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          firebase_uid?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          firebase_uid?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       honestinvoice: {
         Row: {
           created_at: string
@@ -24,26 +72,100 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_items: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          invoice_id: string | null
+          quantity: number
+          rate: number
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          description: string
+          id?: string
+          invoice_id?: string | null
+          quantity?: number
+          rate?: number
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          invoice_id?: string | null
+          quantity?: number
+          rate?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
+          client_id: string | null
           created_at: string
+          currency: string | null
+          due_date: string | null
+          firebase_uid: string | null
           id: string
-          invoice_data: Json
+          invoice_data: Json | null
           invoice_number: string
+          issue_date: string | null
+          notes: string | null
+          status: string | null
+          subtotal: number | null
+          tax_amount: number | null
+          terms: string | null
+          total: number | null
           user_id: string
         }
         Insert: {
+          client_id?: string | null
           created_at?: string
+          currency?: string | null
+          due_date?: string | null
+          firebase_uid?: string | null
           id?: string
-          invoice_data: Json
+          invoice_data?: Json | null
           invoice_number: string
+          issue_date?: string | null
+          notes?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          terms?: string | null
+          total?: number | null
           user_id: string
         }
         Update: {
+          client_id?: string | null
           created_at?: string
+          currency?: string | null
+          due_date?: string | null
+          firebase_uid?: string | null
           id?: string
-          invoice_data?: Json
+          invoice_data?: Json | null
           invoice_number?: string
+          issue_date?: string | null
+          notes?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          terms?: string | null
+          total?: number | null
           user_id?: string
         }
         Relationships: []
@@ -132,6 +254,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_id: {
+        Row: {
+          data: Json | null
+          id: number
+          inserted_at: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          data?: Json | null
+          id?: number
+          inserted_at?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          data?: Json | null
+          id?: number
+          inserted_at?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      User_input_data: {
+        Row: {
+          Created_at: string | null
+          Id: string
+          Invoice_data: Json | null
+          Total_amount: number | null
+          User_id: string | null
+        }
+        Insert: {
+          Created_at?: string | null
+          Id?: string
+          Invoice_data?: Json | null
+          Total_amount?: number | null
+          User_id?: string | null
+        }
+        Update: {
+          Created_at?: string | null
+          Id?: string
+          Invoice_data?: Json | null
+          Total_amount?: number | null
+          User_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string
@@ -156,6 +326,66 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          address: string | null
+          city: string | null
+          company: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          firebase_uid: string
+          id: string
+          invoice_settings: Json | null
+          logo: string | null
+          name: string
+          phone: string | null
+          state: string | null
+          subscription_plan: string | null
+          subscription_status: string | null
+          updated_at: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          firebase_uid: string
+          id?: string
+          invoice_settings?: Json | null
+          logo?: string | null
+          name: string
+          phone?: string | null
+          state?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          firebase_uid?: string
+          id?: string
+          invoice_settings?: Json | null
+          logo?: string | null
+          name?: string
+          phone?: string | null
+          state?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -166,10 +396,9 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       has_role: {
-        Args: {
-          _user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-        }
+        Args:
+          | { _user_id: string; _role: Database["public"]["Enums"]["app_role"] }
+          | { role: string }
         Returns: boolean
       }
     }
