@@ -128,6 +128,7 @@ export type Database = {
           status: string | null
           subtotal: number | null
           tax_amount: number | null
+          tax_rate: number | null
           terms: string | null
           total: number | null
           user_id: string
@@ -146,6 +147,7 @@ export type Database = {
           status?: string | null
           subtotal?: number | null
           tax_amount?: number | null
+          tax_rate?: number | null
           terms?: string | null
           total?: number | null
           user_id: string
@@ -164,6 +166,7 @@ export type Database = {
           status?: string | null
           subtotal?: number | null
           tax_amount?: number | null
+          tax_rate?: number | null
           terms?: string | null
           total?: number | null
           user_id?: string

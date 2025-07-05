@@ -1,123 +1,166 @@
 
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-interface PricingSectionProps {
-  onNavigate: (page: string) => void;
-}
+const plans = [
+  {
+    name: "Free",
+    price: "$0",
+    period: "",
+    description: "Perfect for getting started",
+    features: [
+      "5 invoices per month",
+      "Basic templates",
+      "Email support",
+      "PDF export"
+    ],
+    cta: "Get Started",
+    popular: false,
+    priceId: null
+  },
+  {
+    name: "Pro",
+    price: "$9",
+    period: "/month",
+    description: "For growing businesses",
+    features: [
+      "Unlimited invoices",
+      "Custom templates",
+      "Priority support",
+      "Advanced reporting",
+      "Client portal",
+      "Payment tracking"
+    ],
+    cta: "Start Free Trial",
+    popular: true,
+    priceId: "price_pro" // Replace with your actual Stripe price ID
+  },
+  {
+    name: "Business",
+    price: "$19",
+    period: "/month",
+    description: "For established companies",
+    features: [
+      "Everything in Pro",
+      "Multi-user accounts",
+      "API access",
+      "Custom integrations",
+      "Dedicated support",
+      "White-label options"
+    ],
+    cta: "Start Free Trial",
+    popular: false,
+    priceId: "price_business" // Replace with your actual Stripe price ID
+  }
+];
 
-const PricingSection = ({ onNavigate }: PricingSectionProps) => {
-  const plans = [
-    {
-      name: "Free",
-      price: "$0",
-      period: "/month",
-      description: "Perfect for getting started",
-      features: [
-        "Up to 5 invoices per month",
-        "Basic invoice templates",
-        "Client management",
-        "PDF downloads"
-      ],
-      buttonText: "Get Started Free",
-      isPopular: false
-    },
-    {
-      name: "Pro",
-      price: "$9",
-      period: "/month",
-      description: "Best for growing businesses",
-      features: [
-        "Unlimited invoices",
-        "Premium templates",
-        "Email automation",
-        "Payment tracking",
-        "Advanced reporting",
-        "Priority support"
-      ],
-      buttonText: "Start Pro Trial",
-      isPopular: true
-    },
-    {
-      name: "Business",
-      price: "$19",
-      period: "/month",
-      description: "For established businesses",
-      features: [
-        "Everything in Pro",
-        "Multi-user access",
-        "API access",
-        "Custom branding",
-        "Advanced integrations",
-        "Dedicated support"
-      ],
-      buttonText: "Upgrade Now!",
-      isPopular: false
+const PricingSection = () => {
+  const { toast } = useToast();
+
+  const handleSubscribe = async (plan: typeof plans[0]) => {
+    if (!plan.priceId) {
+      toast({
+        title: "Free Plan",
+        description: "You're already on the free plan! Sign up to get started.",
+      });
+      return;
     }
-  ];
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to subscribe to a plan.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          priceId: plan.priceId,
+          successUrl: `${window.location.origin}/subscription-success`,
+          cancelUrl: `${window.location.origin}/#pricing`
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start subscription process. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
-    <div className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6">
+    <section id="pricing" className="py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Simple, transparent pricing
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">
+            Simple, Transparent Pricing
           </h2>
-          <p className="text-xl text-gray-600">
-            Choose the plan that's right for your business. All plans include a 14-day free trial.
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Choose the perfect plan for your business needs. All plans include our core features.
           </p>
         </div>
-        
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {plans.map((plan, index) => (
-            <div 
-              key={index} 
-              className={`bg-white rounded-lg p-8 shadow-lg relative ${
-                plan.isPopular ? 'border-2 border-green-600 transform scale-105' : 'border border-gray-200'
-              }`}
-            >
-              {plan.isPopular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-green-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                    Most Popular
-                  </span>
-                </div>
+            <Card key={index} className={`relative ${plan.popular ? 'border-blue-500 border-2 scale-105' : 'border-gray-200'}`}>
+              {plan.popular && (
+                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500">
+                  Most Popular
+                </Badge>
               )}
               
-              <div className="text-center mb-8">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.name}</h3>
-                <div className="mb-2">
+              <CardHeader className="text-center pb-8">
+                <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
+                  {plan.name}
+                </CardTitle>
+                <div className="mb-4">
                   <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
                   <span className="text-gray-600">{plan.period}</span>
                 </div>
                 <p className="text-gray-600">{plan.description}</p>
-              </div>
+              </CardHeader>
               
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-center">
-                    <Check className="w-5 h-5 text-green-600 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Button 
-                onClick={() => onNavigate('create-invoice')}
-                className={`w-full py-3 ${
-                  plan.isPopular 
-                    ? 'bg-green-600 hover:bg-green-700 text-white' 
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
-                }`}
-              >
-                {plan.buttonText}
-              </Button>
-            </div>
+              <CardContent className="pt-0">
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-start">
+                      <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <Button 
+                  onClick={() => handleSubscribe(plan)}
+                  className={`w-full ${plan.popular ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
+                  variant={plan.popular ? 'default' : 'outline'}
+                >
+                  {plan.cta}
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
