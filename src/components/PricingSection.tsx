@@ -6,32 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PricingSectionProps {
   onNavigate?: (page: string) => void;
+  onShowAuth?: () => void;
 }
 
 const plans = [
   {
-    name: "Free",
-    price: "$0",
-    period: "",
-    description: "Perfect for getting started",
-    features: [
-      "5 invoices per month",
-      "Basic templates",
-      "Email support",
-      "PDF export"
-    ],
-    cta: "Get Started",
-    popular: false,
-    priceId: null
-  },
-  {
     name: "Pro",
     price: "$9",
     period: "/month",
-    description: "For growing businesses",
+    description: "Perfect for small businesses",
     features: [
       "Unlimited invoices",
       "Custom templates",
@@ -40,15 +27,15 @@ const plans = [
       "Client portal",
       "Payment tracking"
     ],
-    cta: "Start Free Trial",
+    cta: "Subscribe Now",
     popular: true,
-    priceId: "price_pro" // Replace with your actual Stripe price ID
+    priceId: "price_pro"
   },
   {
     name: "Business",
     price: "$19",
     period: "/month",
-    description: "For established companies",
+    description: "For growing companies",
     features: [
       "Everything in Pro",
       "Multi-user accounts",
@@ -57,51 +44,45 @@ const plans = [
       "Dedicated support",
       "White-label options"
     ],
-    cta: "Start Free Trial",
+    cta: "Subscribe Now",
     popular: false,
-    priceId: "price_business" // Replace with your actual Stripe price ID
+    priceId: "price_business"
   }
 ];
 
-const PricingSection = ({ onNavigate }: PricingSectionProps) => {
+const PricingSection = ({ onNavigate, onShowAuth }: PricingSectionProps) => {
   const { toast } = useToast();
+  const { user, session } = useAuth();
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
-    if (!plan.priceId) {
+    if (!user || !session) {
       toast({
-        title: "Free Plan",
-        description: "You're already on the free plan! Sign up to get started.",
+        title: "Authentication Required",
+        description: "Please sign in to subscribe to a plan.",
+        variant: "destructive"
       });
-      if (onNavigate) {
-        onNavigate('create-invoice');
+      if (onShowAuth) {
+        onShowAuth();
       }
       return;
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to subscribe to a plan.",
-          variant: "destructive"
-        });
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: {
           priceId: plan.priceId,
           successUrl: `${window.location.origin}/subscription-success`,
           cancelUrl: `${window.location.origin}/#pricing`
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
       if (error) throw error;
 
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
@@ -121,15 +102,15 @@ const PricingSection = ({ onNavigate }: PricingSectionProps) => {
             Simple, Transparent Pricing
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose the perfect plan for your business needs. All plans include our core features.
+            Choose the perfect plan for your business needs. Start managing your invoices professionally.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {plans.map((plan, index) => (
-            <Card key={index} className={`relative ${plan.popular ? 'border-blue-500 border-2 scale-105' : 'border-gray-200'}`}>
+            <Card key={index} className={`relative ${plan.popular ? 'border-green-500 border-2 scale-105 shadow-lg' : 'border-gray-200 shadow-md'}`}>
               {plan.popular && (
-                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500">
+                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 hover:bg-green-600">
                   Most Popular
                 </Badge>
               )}
@@ -157,8 +138,7 @@ const PricingSection = ({ onNavigate }: PricingSectionProps) => {
                 
                 <Button 
                   onClick={() => handleSubscribe(plan)}
-                  className={`w-full ${plan.popular ? 'bg-blue-500 hover:bg-blue-600' : ''}`}
-                  variant={plan.popular ? 'default' : 'outline'}
+                  className={`w-full ${plan.popular ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-800 hover:bg-gray-900'}`}
                 >
                   {plan.cta}
                 </Button>
@@ -166,6 +146,21 @@ const PricingSection = ({ onNavigate }: PricingSectionProps) => {
             </Card>
           ))}
         </div>
+
+        {!user && (
+          <div className="text-center mt-12">
+            <p className="text-gray-600 mb-4">
+              Ready to get started? Create your account today.
+            </p>
+            <Button 
+              onClick={onShowAuth}
+              variant="outline"
+              className="border-green-600 text-green-600 hover:bg-green-50"
+            >
+              Sign Up Now
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

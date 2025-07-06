@@ -6,14 +6,15 @@ import PricingSection from './PricingSection';
 
 interface LandingPageProps {
   onNavigate: (page: string) => void;
+  onShowAuth: () => void;
 }
 
-const LandingPage = ({ onNavigate }: LandingPageProps) => {
+const LandingPage = ({ onNavigate, onShowAuth }: LandingPageProps) => {
   return (
     <div className="min-h-screen">
-      <HeroSection onNavigate={onNavigate} />
+      <HeroSection onNavigate={onNavigate} onShowAuth={onShowAuth} />
       <FeaturesSection />
-      <PricingSection onNavigate={onNavigate} />
+      <PricingSection onNavigate={onNavigate} onShowAuth={onShowAuth} />
       
       {/* Call to Action */}
       <div className="bg-green-600 py-16">
@@ -25,10 +26,10 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
             Join thousands of businesses that trust HonestInvoice for their billing needs.
           </p>
           <button 
-            onClick={() => onNavigate('create-invoice')}
+            onClick={onShowAuth}
             className="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
           >
-            Sign Up
+            Get Started Now
           </button>
         </div>
       </div>

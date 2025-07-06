@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Subscription {
   subscribed: boolean;
@@ -13,21 +14,25 @@ export const useSubscription = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user, session } = useAuth();
 
   useEffect(() => {
-    fetchSubscription();
-  }, []);
+    if (user && session) {
+      fetchSubscription();
+    } else {
+      setSubscription({ subscribed: false, subscription_tier: 'free', subscription_end: null });
+      setLoading(false);
+    }
+  }, [user, session]);
 
   const fetchSubscription = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setSubscription({ subscribed: false, subscription_tier: 'free', subscription_end: null });
-        setLoading(false);
-        return;
-      }
+    if (!user || !session?.access_token) {
+      setSubscription({ subscribed: false, subscription_tier: 'free', subscription_end: null });
+      setLoading(false);
+      return;
+    }
 
+    try {
       const { data, error } = await supabase
         .from('subscribers')
         .select('subscribed, subscription_tier, subscription_end')
@@ -48,6 +53,23 @@ export const useSubscription = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkSubscriptionStatus = async () => {
+    if (!session?.access_token) return;
+
+    try {
+      await supabase.functions.invoke('check-subscription', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+      
+      // Refetch subscription data after checking
+      await fetchSubscription();
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
     }
   };
 
@@ -77,6 +99,7 @@ export const useSubscription = () => {
     isSubscribed,
     getTier,
     hasFeature,
-    refetch: fetchSubscription
+    refetch: fetchSubscription,
+    checkSubscriptionStatus
   };
 };
