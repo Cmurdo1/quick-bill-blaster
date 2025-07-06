@@ -35,9 +35,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -45,27 +53,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Defer subscription check to prevent deadlocks
           setTimeout(() => {
             checkSubscription();
-          }, 0);
+          }, 100);
         }
         
         setLoading(false);
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 
   const cleanupAuthState = () => {
-    localStorage.removeItem('supabase.auth.token');
+    // Clear all auth-related localStorage items
     Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      if (key.startsWith('sb-') || key.includes('supabase')) {
         localStorage.removeItem(key);
       }
     });
@@ -73,20 +74,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
+      
+      // Clean up any existing auth state
       cleanupAuthState();
       
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           title: "Sign In Error",
           description: error.message,
@@ -104,30 +103,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       return { error: null };
     } catch (error: any) {
+      console.error('Unexpected sign in error:', error);
       toast({
         title: "Sign In Error",
         description: error.message || "An unexpected error occurred",
         variant: "destructive"
       });
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string) => {
     try {
+      setLoading(true);
+      
+      // Clean up any existing auth state
       cleanupAuthState();
-
-      const redirectUrl = `${window.location.origin}/`;
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
       if (error) {
+        console.error('Sign up error:', error);
         toast({
           title: "Sign Up Error",
           description: error.message,
@@ -137,45 +141,62 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       if (data.user) {
-        toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account.",
-        });
+        if (data.user.email_confirmed_at) {
+          toast({
+            title: "Account Created!",
+            description: "You have successfully signed up and are now logged in.",
+          });
+        } else {
+          toast({
+            title: "Account Created!",
+            description: "Please check your email to verify your account.",
+          });
+        }
       }
 
       return { error: null };
     } catch (error: any) {
+      console.error('Unexpected sign up error:', error);
       toast({
         title: "Sign Up Error",
         description: error.message || "An unexpected error occurred",
         variant: "destructive"
       });
       return { error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      cleanupAuthState();
+      setLoading(true);
       
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        toast({
+          title: "Sign Out Error",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        cleanupAuthState();
+        toast({
+          title: "Signed Out",
+          description: "You have been successfully signed out.",
+        });
       }
-      
-      toast({
-        title: "Signed Out",
-        description: "You have been successfully signed out.",
-      });
-      
-      window.location.href = '/';
     } catch (error: any) {
+      console.error('Unexpected sign out error:', error);
       toast({
         title: "Sign Out Error",
         description: error.message || "An error occurred while signing out",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -191,6 +212,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) {
         console.error('Error checking subscription:', error);
+      } else {
+        console.log('Subscription check result:', data);
       }
     } catch (error) {
       console.error('Error invoking check-subscription function:', error);
