@@ -29,7 +29,7 @@ const plans = [
     ],
     cta: "Subscribe Now",
     popular: true,
-    priceId: "price_pro"
+    priceId: "price_1234567890abcdef" // Replace with your actual Stripe price ID
   },
   {
     name: "Business",
@@ -46,7 +46,7 @@ const plans = [
     ],
     cta: "Subscribe Now",
     popular: false,
-    priceId: "price_business"
+    priceId: "price_0987654321fedcba" // Replace with your actual Stripe price ID
   }
 ];
 
@@ -138,7 +138,7 @@ const PricingSection = ({ onNavigate, onShowAuth }: PricingSectionProps) => {
                 
                 <Button 
                   onClick={() => handleSubscribe(plan)}
-                  className={`w-full ${plan.popular ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-800 hover:bg-gray-900'}`}
+                  className={`w-full ${plan.popular ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
                 >
                   {plan.cta}
                 </Button>

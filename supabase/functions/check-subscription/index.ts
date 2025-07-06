@@ -82,9 +82,10 @@ serve(async (req) => {
       logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
       
       const priceId = subscription.items.data[0].price.id;
-      if (priceId === 'price_pro') {
+      // Map your actual Stripe price IDs to tiers
+      if (priceId === 'price_1234567890abcdef') {
         subscriptionTier = "pro";
-      } else if (priceId === 'price_business') {
+      } else if (priceId === 'price_0987654321fedcba') {
         subscriptionTier = "business";
       }
       logStep("Determined subscription tier", { priceId, subscriptionTier });

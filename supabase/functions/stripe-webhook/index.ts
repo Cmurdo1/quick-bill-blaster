@@ -72,8 +72,10 @@ async function handleSubscriptionChange(subscription: any) {
   // Get price to determine tier
   const priceId = subscription.items.data[0]?.price?.id
   let tier = 'free'
-  if (priceId === 'price_pro') tier = 'pro'
-  if (priceId === 'price_business') tier = 'business'
+  
+  // Map your actual Stripe price IDs to tiers
+  if (priceId === 'price_1234567890abcdef') tier = 'pro'
+  if (priceId === 'price_0987654321fedcba') tier = 'business'
 
   // Update subscriber record
   const { error } = await supabaseClient
