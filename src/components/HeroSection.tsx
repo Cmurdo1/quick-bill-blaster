@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 
 interface HeroSectionProps {
   onNavigate: (page: string) => void;
+  onShowAuth: () => void;
 }
 
-const HeroSection = ({ onNavigate }: HeroSectionProps) => {
+const HeroSection = ({ onNavigate, onShowAuth }: HeroSectionProps) => {
   return (
     <div className="bg-gradient-to-b from-white to-gray-50 py-20">
       <div className="max-w-7xl mx-auto px-6 text-center">
@@ -21,7 +22,7 @@ const HeroSection = ({ onNavigate }: HeroSectionProps) => {
           billing process and get paid faster.
         </p>
         <Button 
-          onClick={() => onNavigate('create-invoice')}
+          onClick={onShowAuth}
           className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg font-semibold"
         >
           Join Now
