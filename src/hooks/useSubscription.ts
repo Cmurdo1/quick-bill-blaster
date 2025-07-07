@@ -1,13 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { PLANS, type PlanType } from '@/lib/stripe';
 
 interface Subscription {
   subscribed: boolean;
-  subscription_tier: string | null;
+  subscription_tier: PlanType;
   subscription_end: string | null;
+  stripe_customer_id: string | null;
 }
 
 export const useSubscription = () => {
@@ -20,14 +21,24 @@ export const useSubscription = () => {
     if (user && session) {
       fetchSubscription();
     } else {
-      setSubscription({ subscribed: false, subscription_tier: 'free', subscription_end: null });
+      setSubscription({ 
+        subscribed: false, 
+        subscription_tier: 'free', 
+        subscription_end: null,
+        stripe_customer_id: null
+      });
       setLoading(false);
     }
   }, [user, session]);
 
   const fetchSubscription = async () => {
     if (!user || !session?.access_token) {
-      setSubscription({ subscribed: false, subscription_tier: 'free', subscription_end: null });
+      setSubscription({ 
+        subscribed: false, 
+        subscription_tier: 'free', 
+        subscription_end: null,
+        stripe_customer_id: null
+      });
       setLoading(false);
       return;
     }
@@ -35,7 +46,7 @@ export const useSubscription = () => {
     try {
       const { data, error } = await supabase
         .from('subscribers')
-        .select('subscribed, subscription_tier, subscription_end')
+        .select('subscribed, subscription_tier, subscription_end, stripe_customer_id')
         .eq('user_id', user.id)
         .single();
 
@@ -43,7 +54,12 @@ export const useSubscription = () => {
         throw error;
       }
 
-      setSubscription(data || { subscribed: false, subscription_tier: 'free', subscription_end: null });
+      setSubscription(data || { 
+        subscribed: false, 
+        subscription_tier: 'free', 
+        subscription_end: null,
+        stripe_customer_id: null
+      });
     } catch (error) {
       console.error('Error fetching subscription:', error);
       toast({
@@ -73,24 +89,76 @@ export const useSubscription = () => {
     }
   };
 
+  const createCheckoutSession = async (priceId: string) => {
+    if (!session?.access_token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to subscribe to a plan.",
+        variant: "destructive"
+      });
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          priceId,
+          successUrl: `${window.location.origin}/subscription-success`,
+          cancelUrl: `${window.location.origin}/#pricing`
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+      return data?.url;
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start subscription process. Please try again.",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   const isSubscribed = () => {
     return subscription?.subscribed || false;
   };
 
-  const getTier = () => {
-    return subscription?.subscription_tier || 'free';
+  const getTier = (): PlanType => {
+    return (subscription?.subscription_tier as PlanType) || 'free';
   };
 
   const hasFeature = (feature: string) => {
     const tier = getTier();
-    
-    const features = {
-      free: ['basic_invoices'],
-      pro: ['basic_invoices', 'unlimited_invoices', 'custom_templates', 'client_portal'],
-      business: ['basic_invoices', 'unlimited_invoices', 'custom_templates', 'client_portal', 'multi_user', 'api_access']
-    };
+    const plan = PLANS[tier];
+    return plan.features.some(f => f.toLowerCase().includes(feature.toLowerCase()));
+  };
 
-    return features[tier as keyof typeof features]?.includes(feature) || false;
+  const canCreateInvoice = (currentCount: number) => {
+    const tier = getTier();
+    const limit = PLANS[tier].limits.invoices;
+    return limit === -1 || currentCount < limit;
+  };
+
+  const canCreateClient = (currentCount: number) => {
+    const tier = getTier();
+    const limit = PLANS[tier].limits.clients;
+    return limit === -1 || currentCount < limit;
+  };
+
+  const getUsageInfo = () => {
+    const tier = getTier();
+    const plan = PLANS[tier];
+    return {
+      plan: plan.name,
+      price: plan.price,
+      features: plan.features,
+      limits: plan.limits
+    };
   };
 
   return {
@@ -99,7 +167,11 @@ export const useSubscription = () => {
     isSubscribed,
     getTier,
     hasFeature,
+    canCreateInvoice,
+    canCreateClient,
+    getUsageInfo,
     refetch: fetchSubscription,
-    checkSubscriptionStatus
+    checkSubscriptionStatus,
+    createCheckoutSession
   };
 };

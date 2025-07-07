@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import LandingPage from '@/components/LandingPage';
 import Dashboard from '@/components/Dashboard';
 import InvoiceForm from '@/components/InvoiceForm';
 import ClientForm from '@/components/ClientForm';
+import SubscriptionPlans from '@/components/SubscriptionPlans';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthModal } from '@/components/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -71,6 +71,12 @@ const Index = () => {
         return (
           <ProtectedRoute onShowAuth={handleShowAuth}>
             <Dashboard onNavigate={setCurrentPage} />
+          </ProtectedRoute>
+        );
+      case 'pricing':
+        return (
+          <ProtectedRoute onShowAuth={handleShowAuth}>
+            <SubscriptionPlans />
           </ProtectedRoute>
         );
       default:

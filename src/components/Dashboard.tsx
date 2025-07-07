@@ -9,16 +9,21 @@ import {
   Plus, 
   Eye,
   Edit,
-  Calendar
+  Calendar,
+  AlertCircle
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { invoiceService, clientService, type InvoiceWithClient, type Client } from '@/lib/database';
+import { useSubscription } from '@/hooks/useSubscription';
+import SubscriptionBanner from './SubscriptionBanner';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
 }
 
 const Dashboard = ({ onNavigate }: DashboardProps) => {
+  const { toast } = useToast();
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ['invoices'],
     queryFn: invoiceService.getAll
@@ -28,6 +33,8 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
     queryKey: ['clients'],
     queryFn: clientService.getAll
   });
+
+  const { canCreateInvoice, canCreateClient, getTier } = useSubscription();
 
   // Calculate statistics
   const totalRevenue = invoices.reduce((sum: number, invoice: InvoiceWithClient) => sum + (invoice.total || 0), 0);
@@ -42,6 +49,32 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
       overdue: "destructive"
     };
     return <Badge variant={variants[status] || "outline"}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
+  };
+
+  const handleCreateInvoice = () => {
+    if (!canCreateInvoice(invoices.length)) {
+      toast({
+        title: "Upgrade Required",
+        description: "You've reached your invoice limit. Upgrade to create more invoices.",
+        variant: "destructive"
+      });
+      onNavigate('pricing');
+      return;
+    }
+    onNavigate('create-invoice');
+  };
+
+  const handleCreateClient = () => {
+    if (!canCreateClient(clients.length)) {
+      toast({
+        title: "Upgrade Required", 
+        description: "You've reached your client limit. Upgrade to add more clients.",
+        variant: "destructive"
+      });
+      onNavigate('pricing');
+      return;
+    }
+    onNavigate('clients');
   };
 
   const isLoading = invoicesLoading || clientsLoading;
@@ -62,8 +95,14 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
     );
   }
 
+  const tier = getTier();
+  const showLimits = tier === 'free';
+
   return (
     <div className="space-y-6 p-6">
+      {/* Subscription Banner */}
+      <SubscriptionBanner onNavigate={onNavigate} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -71,16 +110,59 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
           <p className="text-gray-600">Manage your invoices and clients</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => onNavigate('clients')} variant="outline">
+          <Button 
+            onClick={handleCreateClient} 
+            variant="outline"
+            disabled={showLimits && !canCreateClient(clients.length)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Client
+            {showLimits && (
+              <span className="ml-2 text-xs text-gray-500">
+                ({clients.length}/10)
+              </span>
+            )}
           </Button>
-          <Button onClick={() => onNavigate('create-invoice')}>
+          <Button 
+            onClick={handleCreateInvoice}
+            disabled={showLimits && !canCreateInvoice(invoices.length)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Create Invoice
+            {showLimits && (
+              <span className="ml-2 text-xs text-white/80">
+                ({invoices.length}/5)
+              </span>
+            )}
           </Button>
         </div>
       </div>
+
+      {/* Usage Warning for Free Plan */}
+      {showLimits && (invoices.length >= 4 || clients.length >= 8) && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  You're approaching your plan limits
+                </p>
+                <p className="text-xs text-amber-700">
+                  Invoices: {invoices.length}/5 • Clients: {clients.length}/10
+                </p>
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => onNavigate('pricing')}
+                className="ml-auto bg-amber-600 hover:bg-amber-700"
+              >
+                Upgrade Now
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -100,7 +182,10 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
             <FileText className="w-4 h-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{invoices.length}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {invoices.length}
+              {showLimits && <span className="text-sm text-gray-500 ml-1">/5</span>}
+            </div>
           </CardContent>
         </Card>
 
@@ -120,7 +205,10 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
             <Users className="w-4 h-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{clients.length}</div>
+            <div className="text-2xl font-bold text-purple-600">
+              {clients.length}
+              {showLimits && <span className="text-sm text-gray-500 ml-1">/10</span>}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -139,7 +227,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices yet</h3>
               <p className="text-gray-600 mb-4">Create your first invoice to get started</p>
-              <Button onClick={() => onNavigate('create-invoice')}>
+              <Button onClick={handleCreateInvoice}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Invoice
               </Button>
@@ -189,7 +277,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No clients yet</h3>
               <p className="text-gray-600 mb-4">Add your first client to get started</p>
-              <Button onClick={() => onNavigate('clients')} variant="outline">
+              <Button onClick={handleCreateClient} variant="outline">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Client
               </Button>

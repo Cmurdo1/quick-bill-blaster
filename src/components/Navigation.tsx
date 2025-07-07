@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -7,7 +6,8 @@ import {
   Users,
   Plus,
   LogOut,
-  User
+  User,
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -25,13 +25,17 @@ const Navigation = ({ currentPage, onNavigate, onShowAuth }: NavigationProps) =>
     { id: 'invoices', label: 'Invoices', icon: FileText },
     { id: 'clients', label: 'Clients', icon: Users },
     { id: 'create-invoice', label: 'Create Invoice', icon: Plus },
+    { id: 'pricing', label: 'Pricing', icon: CreditCard },
   ];
 
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-3">
+          <div 
+            className="flex items-center space-x-3 cursor-pointer"
+            onClick={() => onNavigate(user ? 'dashboard' : 'landing')}
+          >
             <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center">
               <span className="text-white font-bold text-lg">HI</span>
             </div>
