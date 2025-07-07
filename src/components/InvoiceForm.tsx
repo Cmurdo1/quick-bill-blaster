@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,15 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Plus, Trash2, Save, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { clientService, invoiceService, generateInvoiceNumber, type Client } from '@/lib/database';
+import { clientService, invoiceService, generateInvoiceNumber, type Client, type InvoiceItem } from '@/lib/database';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  rate: number;
-  amount: number;
-}
 
 interface InvoiceFormData {
   client_id: string;
@@ -43,7 +35,7 @@ const InvoiceForm = () => {
     items: [{ description: '', quantity: 1, rate: 0, amount: 0 }]
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: clientService.getAll
   });
@@ -85,18 +77,23 @@ const InvoiceForm = () => {
       });
     },
     onError: (error) => {
+      console.error('Invoice creation error:', error);
       toast({
         title: "Error",
-        description: "Failed to create invoice",
+        description: "Failed to create invoice. Please try again.",
         variant: "destructive"
       });
-      console.error('Invoice creation error:', error);
     }
   });
 
   useEffect(() => {
     generateInvoiceNumber().then(number => {
       setFormData(prev => ({ ...prev, invoice_number: number }));
+    }).catch(error => {
+      console.error('Error generating invoice number:', error);
+      // Fallback to timestamp-based number
+      const timestamp = Date.now().toString().slice(-6);
+      setFormData(prev => ({ ...prev, invoice_number: `INV-${timestamp}` }));
     });
   }, []);
 
@@ -137,16 +134,41 @@ const InvoiceForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.client_id) {
+    
+    if (!formData.invoice_number.trim()) {
       toast({
         title: "Error",
-        description: "Please select a client",
+        description: "Invoice number is required",
         variant: "destructive"
       });
       return;
     }
+
+    if (formData.items.some(item => !item.description.trim())) {
+      toast({
+        title: "Error",
+        description: "All items must have a description",
+        variant: "destructive"
+      });
+      return;
+    }
+
     createInvoiceMutation.mutate(formData);
   };
+
+  if (clientsLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="space-y-4">
+            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -176,18 +198,18 @@ const InvoiceForm = () => {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="client_id">Client *</Label>
+              <Label htmlFor="client_id">Client</Label>
               <Select 
                 value={formData.client_id} 
                 onValueChange={(value) => setFormData({ ...formData, client_id: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a client" />
+                  <SelectValue placeholder="Select a client (optional)" />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((client: Client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.name}
+                      {client.name} {client.company && `(${client.company})`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -195,7 +217,7 @@ const InvoiceForm = () => {
             </div>
             
             <div>
-              <Label htmlFor="invoice_number">Invoice Number</Label>
+              <Label htmlFor="invoice_number">Invoice Number *</Label>
               <Input
                 id="invoice_number"
                 value={formData.invoice_number}
@@ -205,7 +227,7 @@ const InvoiceForm = () => {
             </div>
             
             <div>
-              <Label htmlFor="issue_date">Invoice Date</Label>
+              <Label htmlFor="issue_date">Invoice Date *</Label>
               <Input
                 id="issue_date"
                 type="date"
@@ -216,7 +238,7 @@ const InvoiceForm = () => {
             </div>
             
             <div>
-              <Label htmlFor="due_date">Due Date</Label>
+              <Label htmlFor="due_date">Due Date *</Label>
               <Input
                 id="due_date"
                 type="date"
@@ -241,7 +263,7 @@ const InvoiceForm = () => {
             {formData.items.map((item, index) => (
               <div key={index} className="grid grid-cols-12 gap-2 items-end">
                 <div className="col-span-5">
-                  <Label>Description</Label>
+                  <Label>Description *</Label>
                   <Input
                     placeholder="Item description"
                     value={item.description}
