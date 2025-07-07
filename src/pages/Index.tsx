@@ -10,22 +10,39 @@ import { AuthModal } from '@/components/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
+  console.log('Index component rendering...');
+  
   const [currentPage, setCurrentPage] = useState('landing');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  console.log('User state:', user ? 'authenticated' : 'not authenticated');
+  console.log('Loading state:', loading);
 
   // If user is authenticated, default to dashboard instead of landing
   React.useEffect(() => {
     if (user && currentPage === 'landing') {
+      console.log('User authenticated, navigating to dashboard');
       setCurrentPage('dashboard');
     }
   }, [user, currentPage]);
 
   const handleShowAuth = () => {
+    console.log('Opening auth modal');
     setShowAuthModal(true);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
   const renderPage = () => {
+    console.log('Rendering page:', currentPage);
+    
     switch (currentPage) {
       case 'landing':
         return <LandingPage onNavigate={setCurrentPage} onShowAuth={handleShowAuth} />;
