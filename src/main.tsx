@@ -12,5 +12,11 @@ if (!container) {
 
 console.log('Creating React root...');
 const root = createRoot(container);
+
 console.log('Rendering App...');
-root.render(<App />);
+try {
+  root.render(<App />);
+  console.log('App rendered successfully');
+} catch (error) {
+  console.error('Error rendering app:', error);
+}

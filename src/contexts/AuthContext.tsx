@@ -10,7 +10,6 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  checkSubscription: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,13 +32,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
+    console.log('AuthProvider initializing...');
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -50,12 +44,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.email || 'No session');
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
     return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Attempting sign in for:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -67,6 +70,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return { error };
       }
 
+      console.log('Sign in successful for:', data.user?.email);
       return { error: null };
     } catch (error: any) {
       console.error('Unexpected sign in error:', error);
@@ -79,6 +83,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signUp = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Attempting sign up for:', email);
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -93,6 +98,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return { error };
       }
 
+      console.log('Sign up successful for:', data.user?.email);
       return { error: null };
     } catch (error: any) {
       console.error('Unexpected sign up error:', error);
@@ -105,36 +111,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     try {
       setLoading(true);
+      console.log('Signing out...');
       
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Sign out error:', error);
+      } else {
+        console.log('Sign out successful');
       }
     } catch (error: any) {
       console.error('Unexpected sign out error:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkSubscription = async () => {
-    if (!session?.access_token) return;
-
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
-
-      if (error) {
-        console.error('Error checking subscription:', error);
-      } else {
-        console.log('Subscription check result:', data);
-      }
-    } catch (error) {
-      console.error('Error invoking check-subscription function:', error);
     }
   };
 
@@ -145,7 +134,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signIn,
     signUp,
     signOut,
-    checkSubscription,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
