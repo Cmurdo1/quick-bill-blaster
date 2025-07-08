@@ -9,19 +9,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    headers: {
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
-    }
   },
   preview: {
-    headers: {
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY', 
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Cache-Control': 'public, max-age=31536000, immutable'
-    }
+    port: 8080,
   },
   build: {
     rollupOptions: {
