@@ -289,7 +289,6 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
                   <div>
                     <h4 className="font-medium">{client.name}</h4>
                     <p className="text-sm text-gray-600">
-                      {client.company && `${client.company} • `}
                       {client.email || 'No email'}
                     </p>
                   </div>

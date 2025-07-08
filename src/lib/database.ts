@@ -14,7 +14,8 @@ export interface InvoiceItem {
 }
 
 export interface InvoiceWithClient extends Invoice {
-  client?: Client;
+  client?: Client | null;
+  client_name?: string;
 }
 
 // Client operations
@@ -39,7 +40,7 @@ export const clientService = {
     const clientData = {
       ...client,
       user_id: user.id,
-      zip: client.zip_code, // Map zip_code to zip for database compatibility
+      zip: client.zip, // Use zip field directly
     };
 
     const { data, error } = await supabase
@@ -58,7 +59,7 @@ export const clientService = {
   async update(id: string, updates: Partial<ClientInsert>): Promise<Client> {
     const updateData = {
       ...updates,
-      zip: updates.zip_code, // Map zip_code to zip for database compatibility
+      zip: updates.zip, // Use zip field directly
     };
 
     const { data, error } = await supabase
@@ -103,7 +104,7 @@ export const invoiceService = {
       console.error('Error fetching invoices:', error);
       throw error;
     }
-    return data || [];
+    return (data as any) || [];
   },
 
   async getById(id: string): Promise<InvoiceWithClient> {
@@ -120,7 +121,7 @@ export const invoiceService = {
       console.error('Error fetching invoice:', error);
       throw error;
     }
-    return data;
+    return data as any;
   },
 
   async create(

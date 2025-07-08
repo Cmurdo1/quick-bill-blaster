@@ -85,7 +85,7 @@ const SubscriptionBanner = ({ onNavigate }: SubscriptionBannerProps) => {
               View Plans
             </Button>
             
-            {tier !== 'business' && (
+            {tier === 'free' && (
               <Button 
                 size="sm"
                 onClick={handleUpgrade}

@@ -54,7 +54,10 @@ export const useSubscription = () => {
         throw error;
       }
 
-      setSubscription(data || { 
+      setSubscription(data ? {
+        ...data,
+        subscription_tier: (data.subscription_tier as PlanType) || 'free'
+      } : { 
         subscribed: false, 
         subscription_tier: 'free', 
         subscription_end: null,

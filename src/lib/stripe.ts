@@ -1,7 +1,7 @@
 import { loadStripe } from '@stripe/stripe-js';
 
 // Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+const stripePromise = loadStripe('pk_test_51RSllgRD1hxs4eDXZ25BsePqQM7uHr4wzBjjkYwr9cp1SujpxPdMeKEyHNtRJCaEzOrkP2aD3wBQdedmeXFsxQTX00MVR18NHr');
 
 export { stripePromise };
 

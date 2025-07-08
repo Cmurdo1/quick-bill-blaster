@@ -130,12 +130,17 @@ export type Database = {
           invoice_number: string
           issue_date: string | null
           notes: string | null
+          paid_at: string | null
+          pdf_url: string | null
+          sent_at: string | null
           status: string | null
           subtotal: number | null
           tax_amount: number | null
           tax_rate: number | null
+          template_id: string | null
           terms: string | null
           total: number | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -149,12 +154,17 @@ export type Database = {
           invoice_number: string
           issue_date?: string | null
           notes?: string | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
           status?: string | null
           subtotal?: number | null
           tax_amount?: number | null
           tax_rate?: number | null
+          template_id?: string | null
           terms?: string | null
           total?: number | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -168,37 +178,78 @@ export type Database = {
           invoice_number?: string
           issue_date?: string | null
           notes?: string | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
           status?: string | null
           subtotal?: number | null
           tax_amount?: number | null
           tax_rate?: number | null
+          template_id?: string | null
           terms?: string | null
           total?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      login_history: {
+        Row: {
+          id: number
+          ip_address: string | null
+          login_timestamp: string
+          success: boolean | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: never
+          ip_address?: string | null
+          login_timestamp?: string
+          success?: boolean | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: never
+          ip_address?: string | null
+          login_timestamp?: string
+          success?: boolean | null
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
           updated_at: string
+          website: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id: string
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -262,6 +313,39 @@ export type Database = {
         }
         Relationships: []
       }
+      templates: {
+        Row: {
+          category: string | null
+          config: Json
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          preview_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          config?: Json
+          created_at?: string | null
+          description?: string | null
+          id: string
+          is_active?: boolean | null
+          name: string
+          preview_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          config?: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          preview_url?: string | null
+        }
+        Relationships: []
+      }
       user_id: {
         Row: {
           data: Json | null
@@ -307,6 +391,51 @@ export type Database = {
           Invoice_data?: Json | null
           Total_amount?: number | null
           User_id?: string | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          company_address: string | null
+          company_name: string | null
+          company_phone: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          logo_url: string | null
+          stripe_customer_id: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_address?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          logo_url?: string | null
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_address?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          logo_url?: string | null
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -399,6 +528,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_current_user_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          website: string | null
+        }[]
+      }
       get_user_role: {
         Args: Record<PropertyKey, never> | { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -408,6 +550,14 @@ export type Database = {
           | { _user_id: string; _role: Database["public"]["Enums"]["app_role"] }
           | { role: string }
         Returns: boolean
+      }
+      is_authenticated: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      request_password_reset: {
+        Args: { email_address: string }
+        Returns: Json
       }
     }
     Enums: {

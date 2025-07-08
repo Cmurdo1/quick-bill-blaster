@@ -209,7 +209,7 @@ const InvoiceForm = () => {
                 <SelectContent>
                   {clients.map((client: Client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.name} {client.company && `(${client.company})`}
+                      {client.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
